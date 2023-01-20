@@ -41,7 +41,7 @@ public class ConnectionMsg {
             buffer.put(address.getAddress());                        // SOCKS5 address. ADDR
         }
 
-        buffer.putShort((short) port);                               // BNDPORT
+        buffer.putShort((short) port);                               // BNDPORT   // 2 байта
         return buffer.array();
     }
 

@@ -24,21 +24,16 @@ public class SocksClient {
     private SelectionKey destSelectionKey;
 
     //  Буфер на приём/отправку сообщений
-    private final ByteBuffer clientToDestBuffer;
-    private final ByteBuffer destToClientBuffer;
+    private final ByteBuffer clientToDestBuffer = ByteBuffer.allocate(BUF_SIZE);
+    private final ByteBuffer destToClientBuffer = ByteBuffer.allocate(BUF_SIZE);
 
     private boolean closeUponSending;
-
-    {
-        destToClientBuffer = ByteBuffer.allocate(BUF_SIZE);
-        clientToDestBuffer = ByteBuffer.allocate(BUF_SIZE);
-        closeUponSending = false;
-        socksClientState  = SocksClientState.RECV_INIT_GREETING;
-    }
 
     public SocksClient(SocketChannel clientSocketChannel, SelectionKey clientSelectionKey) {
         this.clientSocketChannel = clientSocketChannel;
         this.clientSelectionKey = clientSelectionKey;
+        socksClientState = SocksClientState.RECV_INIT_GREETING;
+        closeUponSending = false;
     }
 
     public GreetingMessage getClientGreeting() throws IllegalArgumentException {

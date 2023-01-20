@@ -19,13 +19,14 @@ public class GreetingMessage {
     public GreetingMessage(ByteBuffer buffer) throws BufferUnderflowException, IllegalArgumentException {
         buffer.flip();
 
+
         socksVersion = buffer.get();
         byte authMethodsNum = buffer.get();
 
         if(authMethodsNum < 0){
             throw new RuntimeException();
         }
-        for (int i = 0; i < authMethodsNum; ++i) {
+        for (int i = 0; i < Byte.toUnsignedInt(authMethodsNum); ++i) {
             AuthMethod authMethod = AuthMethod.getByValue(buffer.get());
 
             if (authMethod != null) {

@@ -15,7 +15,6 @@ import org.example.greetingMessage.GreetingMessage;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
@@ -98,10 +97,14 @@ public class ChannelReader {
         SocksClientState state = socksClient.getSocksClientState();
         // у нас не просто подключение, а сначала адская пересылка сообщений, а потом подключение
         if (state == RECV_INIT_GREETING) {      // Приветствие клиента (начало обмена сообщениями для подключения)
+                                                // клиент отправил нам запрос мы его проверили и ответили
+            System.out.println("RECV_INIT_GREETING  " );
             greet(socketChannel, socksClient);
         } else if (state == RECV_CONN_REQ) {    // Запрос на подключение клиента (посылка после авторизации)
+            System.out.println("RECV_CONN_REQ   ");
             processConnectionRequest(socketChannel, socksClient, selectionKey);
         } else if (state == ACTIVE) {   // клиент подключён
+            System.out.println("ACTIVE  ");
             if (socksClient.getClientToDestBuffer().remaining() == 0) {
                 selectionKey.interestOps(selectionKey.interestOps() & ~OP_READ);
             }
@@ -117,6 +120,7 @@ public class ChannelReader {
             GreetingMessage greeting = socksClient.getClientGreeting();
 
             if (greeting.getSocksVersion() != SOCKS_VERSION) {
+                System.out.println("Unsupported socks version");
                 socksClient.closeClientSide();
                 return;
             }
@@ -150,7 +154,6 @@ public class ChannelReader {
             if (request.getRequestCommand() == RequestCode.ESTABLISH_STREAM_CONNECTION) {
                 createConnection(request, socksClient, selectionKey);
             } else {
-
                 sendResponse(socksClient,
                         new ConnectionMsg(SOCKS_VERSION, AddressType.IPV4_ADDRESS, InetAddress.getLocalHost(), proxyPort),
                         ResponseCode.CMD_NOT_SUPPORTED);
@@ -178,16 +181,10 @@ public class ChannelReader {
         connect(socksClient, inetSocketAddress);
     }
 
-    private void sendHostUnreachable(SocksClient socksClient) throws UnknownHostException {
-        sendResponse(socksClient,
-                new ConnectionMsg(SOCKS_VERSION, AddressType.IPV4_ADDRESS, InetAddress.getLocalHost(), proxyPort),
-                ResponseCode.HOST_UNREACHABLE);
-    }
-
     public static void connect(SocksClient socksClient, InetSocketAddress inetSocketAddress) throws IOException {
         socksClient.getClientSelectionKey().interestOps(0);
         socksClient.setSocksClientState(SocksClientState.CONNECTING_TO_DEST);
-
+        //System.out.println("CONNECTING_TO_DEST  " + socksClient.getDestAddress());
         socksClient.setDestAddress(inetSocketAddress);
 
         SocketChannel destSocketChannel = SocketChannel.open();

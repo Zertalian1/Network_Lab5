@@ -31,13 +31,15 @@ public class DnsResolver {
 
     private final Resolver resolver;
 
-    public DnsResolver(Selector selector, SimpleResolver resolver) throws IOException {
-        this.address = resolver.getAddress();
+    public DnsResolver(Selector selector, InetSocketAddress address) throws IOException {
+        this.address = address;
         datagramChannel = DatagramChannel.open();
         datagramChannel.configureBlocking(false);
         dnsKey = datagramChannel.register(selector, SelectionKey.OP_READ, new ChannelJoin(null, ChannelRole.DNS));
 
-        this.resolver = resolver;
+        SimpleResolver simpleResolver = new SimpleResolver(address.getAddress());
+        simpleResolver.setPort(address.getPort());
+        resolver = simpleResolver;
     }
 
     private byte[] makeDNSMessage(String name) throws TextParseException {
@@ -51,7 +53,7 @@ public class DnsResolver {
 
     public void makeDNSRequest(String domain, SelectionKey key) throws TextParseException {
         byte[] dnsMessage = makeDNSMessage(domain + ".");
-        //domainNameClientMap.put(messageID, key);
+        domainNameClientMap.put(messageID, key);
 
         if (outputBuffer != null) {
             outputBuffer = ByteBuffer.allocate(outputBuffer.capacity() + dnsMessage.length).put(outputBuffer).put(dnsMessage);
